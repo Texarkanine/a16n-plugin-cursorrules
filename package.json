@@ -1,0 +1,52 @@
+{
+  "name": "a16n-plugin-cursorrules",
+  "version": "0.1.0",
+  "description": "a16n plugin for discovering legacy .cursorrules files",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rimraf dist *.tsbuildinfo",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "a16n",
+    "a16n-plugin",
+    "cursorrules",
+    "cursor",
+    "ai-rules",
+    "agent-customization"
+  ],
+  "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Texarkanine/a16n-plugin-cursorrules.git"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "peerDependencies": {
+    "@a16njs/models": "^0.9.0"
+  },
+  "devDependencies": {
+    "@a16njs/models": "^0.9.0",
+    "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^2.1.9",
+    "rimraf": "^6.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^2.0.0"
+  }
+}
