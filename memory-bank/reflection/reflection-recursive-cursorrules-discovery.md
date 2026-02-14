@@ -31,5 +31,5 @@ Replaced single-file root lookup with recursive `readdir({ withFileTypes: true }
 ## Status
 
 - 16/16 tests passing
-- Build clean (tsc)
+- Build clean (tsc) — verified locally; CI failure for `TS2307: Cannot find module '@a16njs/models'` was resolved in commit 8fb2e14 (lockfile fix)
 - Ready for `/archive`

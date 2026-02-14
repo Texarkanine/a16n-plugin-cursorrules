@@ -59,6 +59,7 @@
 - [ ] `a16n convert --from cursor --to cursorrules <fixture>` returns unsupported gracefully
 
 ### Components
+
 | Component | File | Purpose |
 |-----------|------|---------|
 | Plugin entry | `src/index.ts` | Default export of A16nPlugin |
@@ -66,3 +67,27 @@
 | Discovery tests | `test/discover.test.ts` | Test discovery logic |
 | Plugin tests | `test/index.test.ts` | Test plugin interface |
 | Fixtures | `test/fixtures/` | Sample project directories |
+
+---
+
+## Current Task: CodeRabbit PR #2 Fixes
+
+**Status:** COMPLETE
+**PR URL:** https://github.com/Texarkanine/a16n-plugin-cursorrules/pull/2
+**Rate Limit Until:**
+**Last Updated:** 2026-02-14T15:20:00Z
+
+### Actionable Items
+- [x] ID: release-npm - Switch `pnpm publish` to `npm publish --access public` for OIDC trusted publishing
+- [x] ID: qa-pkgmgr - Fix package manager label "npm" → "pnpm" in .qa_validation_status
+- [x] ID: nvmrc-ver - Fix .nvmrc version mismatch in activeContext.md (22 → 24)
+- [x] ID: syspatterns-err - Fix error handling doc in systemPatterns.md to match code behavior
+- [x] ID: skip-dirs - Add SKIP_DIRS to recursive traversal to skip node_modules, .git, etc.
+- [x] ID: tasks-md058 - Add blank line before table in tasks.md (MD058)
+- [x] ID: tech-md040 - Add language identifier to fenced code block in techContext.md (MD040)
+- [x] ID: reflect-build - Update build status in reflection doc to be accurate
+
+### Ignored
+- ID: pnpm-version - "Consider updating pinned pnpm version" — Low priority nitpick, not a correctness issue
+- ID: silent-catch - "Silent catch swallows all FS errors" — Intentional design; all FS errors during discovery should be non-fatal
+- ID: nonmatch-test - "Test for non-matching extensions doesn't exercise the filter" — Updated test to use `with-non-matching-ext` fixture with `.cursorrules.yaml` and `.cursorrules.json` files

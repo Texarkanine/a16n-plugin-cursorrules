@@ -50,6 +50,8 @@ For now: keep `supports: [GlobalPrompt]` since the existing plugins use it and t
 
 ## Error Handling
 
-- Missing `.cursorrules`: Return empty `DiscoveryResult` (not an error)
-- Empty `.cursorrules`: Return `GlobalPrompt` with empty content (warn? or just return it)
-- Read errors: Throw (let the engine handle)
+Per `src/discover.ts`, all filesystem errors are caught gracefully:
+
+- **Missing `.cursorrules`**: The `readdir` or `readFile` call catches the error and returns an empty `DiscoveryResult` (no items, no warnings)
+- **Empty `.cursorrules`**: Returns a `GlobalPrompt` with empty string content
+- **Read errors** (permissions, symlink loops, etc.): Caught by the `try/catch` around `readFile`; the file is silently skipped (no item added, no warning). The `readdir` catch similarly returns early for unreadable directories

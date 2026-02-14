@@ -15,6 +15,22 @@ import {
 const CURSORRULES_PATTERN = /^\.cursorrules(\.(md|txt))?$/;
 
 /**
+ * Directories to skip during recursive traversal.
+ * These are well-known non-project directories that can contain
+ * huge numbers of files and would never contain user-authored .cursorrules.
+ */
+const SKIP_DIRS = new Set([
+  'node_modules',
+  '.git',
+  '.hg',
+  '.svn',
+  'dist',
+  'build',
+  '.next',
+  '.turbo',
+]);
+
+/**
  * Recursively discover legacy .cursorrules files in the given project root.
  *
  * Searches the entire directory tree for files whose basename matches
@@ -44,6 +60,9 @@ export async function discover(root: string): Promise<DiscoveryResult> {
       const entryPath = resolve(currentDir, entry.name);
 
       if (entry.isDirectory()) {
+        if (SKIP_DIRS.has(entry.name)) {
+          continue;
+        }
         await traverse(entryPath, projectRoot);
         continue;
       }

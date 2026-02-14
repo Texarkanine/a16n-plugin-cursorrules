@@ -57,7 +57,7 @@ PASS
 - Module System: ESM
 - Build: `tsc` (no bundler)
 - Test Framework: Vitest
-- Package Manager: npm
+- Package Manager: pnpm
 
 ✅ **Build Requirements:**
 - tsconfig.json — to be created (extends a16n conventions)

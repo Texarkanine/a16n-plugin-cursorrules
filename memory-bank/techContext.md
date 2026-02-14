@@ -26,7 +26,7 @@
 
 ## Package Structure
 
-```
+```text
 a16n-plugin-cursorrules/
 ├── src/
 │   ├── index.ts          # Plugin default export

@@ -1,6 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterAll } from 'vitest';
 import { resolve } from 'node:path';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { CustomizationType, CURRENT_IR_VERSION, createId } from '@a16njs/models';
 import { discover } from '../src/discover.js';
 
@@ -140,10 +142,36 @@ describe('discover', () => {
   // --- Non-matching extensions ---
 
   it('ignores files with non-matching extensions', async () => {
-    // The no-cursorrules fixture has no matching files
-    const root = resolve(fixturesDir, 'no-cursorrules');
+    const root = resolve(fixturesDir, 'with-non-matching-ext');
     const result = await discover(root);
 
     expect(result.items).toHaveLength(0);
+  });
+
+  // --- Skipped directories ---
+
+  describe('directory skipping', () => {
+    const tmpRoot = mkdtempSync(resolve(tmpdir(), 'discover-skip-'));
+
+    // Create a root .cursorrules
+    writeFileSync(resolve(tmpRoot, '.cursorrules'), 'root content');
+    // Create .cursorrules inside node_modules (should be skipped)
+    mkdirSync(resolve(tmpRoot, 'node_modules', 'some-pkg'), { recursive: true });
+    writeFileSync(resolve(tmpRoot, 'node_modules', 'some-pkg', '.cursorrules'), 'skip me');
+    // Create .cursorrules inside .git (should be skipped)
+    mkdirSync(resolve(tmpRoot, '.git', 'objects'), { recursive: true });
+    writeFileSync(resolve(tmpRoot, '.git', 'objects', '.cursorrules'), 'skip me too');
+
+    afterAll(() => {
+      rmSync(tmpRoot, { recursive: true, force: true });
+    });
+
+    it('skips node_modules, .git, and other non-project directories', async () => {
+      const result = await discover(tmpRoot);
+
+      // Should only find the root .cursorrules, not the ones in node_modules or .git
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].sourcePath).toBe(resolve(tmpRoot, '.cursorrules'));
+    });
   });
 });

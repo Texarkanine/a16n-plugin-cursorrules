@@ -9,7 +9,7 @@ BUILD complete (Phases 1-7). All code implemented and verified. Ready for `/refl
 1. **Dependency strategy:** `@a16njs/models` as `peerDependencies` + `devDependencies`, both `^0.9.0`
 2. **Emit behavior:** Return all items as `unsupported` — no file writing
 3. **Plugin ID:** `cursorrules`
-4. **.nvmrc:** Set to 22 (available LTS) rather than 24 (planned but not on current system)
+4. **.nvmrc:** Set to 24
 5. **Added `@vitest/coverage-v8`** to devDependencies for coverage reporting
 
 ## Build Results
