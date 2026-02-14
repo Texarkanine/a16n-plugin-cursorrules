@@ -35,8 +35,9 @@
     "type": "git",
     "url": "https://github.com/Texarkanine/a16n-plugin-cursorrules.git"
   },
+  "packageManager": "pnpm@9.0.0",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "peerDependencies": {
     "@a16njs/models": "^0.9.0"
