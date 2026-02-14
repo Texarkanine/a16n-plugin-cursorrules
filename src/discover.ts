@@ -1,5 +1,5 @@
-import { resolve } from 'node:path';
-import { readFile } from 'node:fs/promises';
+import { resolve, relative, dirname, sep, posix } from 'node:path';
+import { readFile, readdir } from 'node:fs/promises';
 import {
   type DiscoveryResult,
   type GlobalPrompt,
@@ -8,36 +8,71 @@ import {
   createId,
 } from '@a16njs/models';
 
-const CURSORRULES_FILENAME = '.cursorrules';
+/**
+ * Pattern matching legacy .cursorrules filenames.
+ * Matches: .cursorrules, .cursorrules.md, .cursorrules.txt
+ */
+const CURSORRULES_PATTERN = /^\.cursorrules(\.(md|txt))?$/;
 
 /**
- * Discover legacy .cursorrules file in the given project root.
+ * Recursively discover legacy .cursorrules files in the given project root.
  *
- * Looks for a `.cursorrules` file at the root of the project directory.
- * If found, parses it as a GlobalPrompt customization. The entire file
- * content becomes the prompt content.
+ * Searches the entire directory tree for files whose basename matches
+ * `.cursorrules`, `.cursorrules.md`, or `.cursorrules.txt`. Each match
+ * becomes a GlobalPrompt customization with `relativeDir` preserving
+ * the file's directory location relative to the project root.
  *
  * @param root - The root directory of the project to search
  * @returns A DiscoveryResult containing any found GlobalPrompt items
  */
 export async function discover(root: string): Promise<DiscoveryResult> {
-  const filePath = resolve(root, CURSORRULES_FILENAME);
+  const items: GlobalPrompt[] = [];
 
-  let content: string;
-  try {
-    content = await readFile(filePath, 'utf-8');
-  } catch {
-    return { items: [], warnings: [] };
+  await traverse(root, root);
+
+  return { items, warnings: [] };
+
+  async function traverse(currentDir: string, projectRoot: string): Promise<void> {
+    let entries;
+    try {
+      entries = await readdir(currentDir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+
+    for (const entry of entries) {
+      const entryPath = resolve(currentDir, entry.name);
+
+      if (entry.isDirectory()) {
+        await traverse(entryPath, projectRoot);
+        continue;
+      }
+
+      if (!entry.isFile() || !CURSORRULES_PATTERN.test(entry.name)) {
+        continue;
+      }
+
+      let content: string;
+      try {
+        content = await readFile(entryPath, 'utf-8');
+      } catch {
+        continue;
+      }
+
+      const relDir = relative(projectRoot, dirname(entryPath));
+      const relativeDir = relDir === ''
+        ? undefined
+        : relDir.split(sep).join(posix.sep);
+
+      items.push({
+        id: createId(CustomizationType.GlobalPrompt, entryPath),
+        type: CustomizationType.GlobalPrompt,
+        version: CURRENT_IR_VERSION,
+        sourcePath: entryPath,
+        relativeDir,
+        content,
+        metadata: {},
+      });
+    }
   }
-
-  const item: GlobalPrompt = {
-    id: createId(CustomizationType.GlobalPrompt, filePath),
-    type: CustomizationType.GlobalPrompt,
-    version: CURRENT_IR_VERSION,
-    sourcePath: filePath,
-    content,
-    metadata: {},
-  };
-
-  return { items: [item], warnings: [] };
 }
