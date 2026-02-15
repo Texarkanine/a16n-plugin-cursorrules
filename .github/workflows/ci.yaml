@@ -39,3 +39,9 @@ jobs:
 
       - name: Test with Coverage
         run: pnpm test:coverage
+
+      - name: Upload CLI coverage
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
