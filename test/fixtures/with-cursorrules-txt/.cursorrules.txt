@@ -1,0 +1,2 @@
+Always write tests first.
+Use descriptive variable names.
