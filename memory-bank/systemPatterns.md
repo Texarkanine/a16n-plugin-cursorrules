@@ -6,41 +6,51 @@ The plugin implements the `A16nPlugin` interface from `@a16njs/models`:
 
 ```typescript
 interface A16nPlugin {
-  id: string;                    // 'cursorrules'
-  name: string;                  // 'Legacy .cursorrules'
-  supports: CustomizationType[]; // [GlobalPrompt]
-  discover(root: string): Promise<DiscoveryResult>;
-  emit(models: AgentCustomization[], root: string, options?: EmitOptions): Promise<EmitResult>;
+  id: string;                                  // 'cursorrules'
+  name: string;                                // 'Legacy .cursorrules'
+  supports: CustomizationType[];               // [GlobalPrompt]
+  pathPatterns?: PluginPathPatterns;            // optional path patterns
+  discover(rootOrWorkspace: string | Workspace): Promise<DiscoveryResult>;
+  emit(models: AgentCustomization[], rootOrWorkspace: string | Workspace, options?: EmitOptions): Promise<EmitResult>;
 }
 ```
 
 The plugin exports this as the **default export** of the package entry point.
 
+### Workspace Parameter Handling
+
+Both `discover()` and `emit()` accept `string | Workspace`. The plugin uses `resolveRoot()` from `@a16njs/models` to extract the root path string, then continues using `node:fs/promises` directly. This matches the pattern used by the built-in plugins (plugin-cursor, plugin-claude).
+
+```typescript
+import { resolveRoot, type Workspace } from '@a16njs/models';
+
+export async function discover(rootOrWorkspace: string | Workspace): Promise<DiscoveryResult> {
+  const root = resolveRoot(rootOrWorkspace);
+  // ... use root string with node:fs/promises as before
+}
+```
+
 ## Discovery Pattern
 
 Following existing plugins (`plugin-cursor`, `plugin-claude`):
 
-1. Check if `.cursorrules` exists at `root`
-2. Read file contents
-3. Return as `GlobalPrompt` with `createId()` and `CURRENT_IR_VERSION`
-4. Return empty results if file doesn't exist
+1. Accept `string | Workspace` and extract root via `resolveRoot()`
+2. Recursively traverse directory tree for `.cursorrules`, `.cursorrules.md`, `.cursorrules.txt`
+3. Skip well-known non-project directories (node_modules, .git, etc.)
+4. Return each match as `GlobalPrompt` with `createId()` and `CURRENT_IR_VERSION`
+5. Set `relativeDir` for files in subdirectories (posix-normalized)
+6. Return empty results if no files found
 
 ## Emit Pattern (No-Op)
 
 Since `.cursorrules` is a legacy read-only format:
 
-1. Return all input items as `unsupported`
-2. Return empty `written` array
-3. No warnings needed (the `supports` array already communicates this is limited)
+1. Accept `string | Workspace` (parameter is unused)
+2. Return all input items as `unsupported`
+3. Return empty `written` array
+4. No warnings needed
 
-Wait - actually the plugin supports `GlobalPrompt` in its `supports` array, and we still return everything as unsupported in emit. This is intentional: the plugin can READ GlobalPrompts from `.cursorrules` but cannot WRITE them back. The `supports` array describes what types can be discovered. The emit returning unsupported is the correct behavior per the issue ("NO EMISSION").
-
-**Correction:** The `supports` array is used by both discover and emit. If we list `GlobalPrompt` in supports but can't emit it, that's misleading. Options:
-1. List `GlobalPrompt` in supports (accurate for discover, misleading for emit)
-2. Empty supports array (misleading for discover)
-3. Add separate `discoverySupports` / `emitSupports` to the plugin interface
-
-For now: keep `supports: [GlobalPrompt]` since the existing plugins use it and the emit returning unsupported is self-documenting. If the framework needs to differentiate, that's a framework enhancement.
+The plugin lists `GlobalPrompt` in `supports` because it can discover GlobalPrompts. Emit returning all items as unsupported is intentional and self-documenting — the format is legacy/read-only.
 
 ## Naming Conventions
 
@@ -50,8 +60,7 @@ For now: keep `supports: [GlobalPrompt]` since the existing plugins use it and t
 
 ## Error Handling
 
-Per `src/discover.ts`, all filesystem errors are caught gracefully:
-
-- **Missing `.cursorrules`**: The `readdir` or `readFile` call catches the error and returns an empty `DiscoveryResult` (no items, no warnings)
-- **Empty `.cursorrules`**: Returns a `GlobalPrompt` with empty string content
-- **Read errors** (permissions, symlink loops, etc.): Caught by the `try/catch` around `readFile`; the file is silently skipped (no item added, no warning). The `readdir` catch similarly returns early for unreadable directories
+- Missing `.cursorrules`: Return empty `DiscoveryResult` (not an error)
+- Empty `.cursorrules`: Return `GlobalPrompt` with empty content
+- Read errors on individual files: Silently skip (continue traversal)
+- Unreadable directories: Silently skip (continue traversal)

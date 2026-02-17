@@ -3,9 +3,11 @@ import { readFile, readdir } from 'node:fs/promises';
 import {
   type DiscoveryResult,
   type GlobalPrompt,
+  type Workspace,
   CustomizationType,
   CURRENT_IR_VERSION,
   createId,
+  resolveRoot,
 } from '@a16njs/models';
 
 /**
@@ -38,10 +40,11 @@ const SKIP_DIRS = new Set([
  * becomes a GlobalPrompt customization with `relativeDir` preserving
  * the file's directory location relative to the project root.
  *
- * @param root - The root directory of the project to search
+ * @param rootOrWorkspace - The root directory path or Workspace to search
  * @returns A DiscoveryResult containing any found GlobalPrompt items
  */
-export async function discover(root: string): Promise<DiscoveryResult> {
+export async function discover(rootOrWorkspace: string | Workspace): Promise<DiscoveryResult> {
+  const root = resolveRoot(rootOrWorkspace);
   const items: GlobalPrompt[] = [];
 
   await traverse(root, root);

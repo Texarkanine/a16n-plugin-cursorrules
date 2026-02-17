@@ -3,6 +3,7 @@ import {
   type EmitResult,
   type EmitOptions,
   type AgentCustomization,
+  type Workspace,
   CustomizationType,
 } from '@a16njs/models';
 import { discover } from './discover.js';
@@ -19,13 +20,13 @@ const plugin: A16nPlugin = {
   name: 'Legacy .cursorrules',
   supports: [CustomizationType.GlobalPrompt],
 
-  discover(root: string) {
-    return discover(root);
+  discover(rootOrWorkspace: string | Workspace) {
+    return discover(rootOrWorkspace);
   },
 
   async emit(
     models: AgentCustomization[],
-    _root: string,
+    _rootOrWorkspace: string | Workspace,
     _options?: EmitOptions,
   ): Promise<EmitResult> {
     return { written: [], warnings: [], unsupported: models };
