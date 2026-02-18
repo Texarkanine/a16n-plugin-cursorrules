@@ -8,8 +8,8 @@
 
 ## Dependencies
 
-- **Peer:** `@a16njs/models ^0.9.0` (types + CustomizationType enum + helpers)
-- **Dev:** `@a16njs/models ^0.9.0`, TypeScript, Vitest, @types/node, rimraf
+- **Peer:** `@a16njs/models ^0.10.0` (types + CustomizationType enum + helpers)
+- **Dev:** `@a16njs/models ^0.10.0`, TypeScript, Vitest, @types/node, rimraf
 
 ## Build
 

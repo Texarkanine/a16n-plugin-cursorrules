@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { readFileSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { CustomizationType, CURRENT_IR_VERSION, createId } from '@a16njs/models';
+import { CustomizationType, CURRENT_IR_VERSION, createId, LocalWorkspace } from '@a16njs/models';
 import { discover } from '../src/discover.js';
 
 const fixturesDir = resolve(import.meta.dirname, 'fixtures');
@@ -173,5 +173,25 @@ describe('discover', () => {
       expect(result.items).toHaveLength(1);
       expect(result.items[0].sourcePath).toBe(resolve(tmpRoot, '.cursorrules'));
     });
+  });
+
+  // --- Workspace parameter support ---
+
+  it('accepts a Workspace instance', async () => {
+    const root = resolve(fixturesDir, 'with-cursorrules');
+    const workspace = new LocalWorkspace('test', root);
+    const result = await discover(workspace);
+
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].type).toBe(CustomizationType.GlobalPrompt);
+  });
+
+  it('works with Workspace for nested discovery', async () => {
+    const root = resolve(fixturesDir, 'nested-cursorrules');
+    const workspace = new LocalWorkspace('test-nested', root);
+    const result = await discover(workspace);
+
+    expect(result.items).toHaveLength(2);
+    expect(result.items.every((i) => i.type === CustomizationType.GlobalPrompt)).toBe(true);
   });
 });
