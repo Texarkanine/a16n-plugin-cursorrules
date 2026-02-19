@@ -1,6 +1,6 @@
 {
   "name": "a16n-plugin-cursorrules",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "a16n plugin for discovering legacy .cursorrules files",
   "type": "module",
   "main": "./dist/index.js",

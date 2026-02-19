@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/Texarkanine/a16n-plugin-cursorrules/compare/a16n-plugin-cursorrules-v0.1.1...a16n-plugin-cursorrules-v0.1.2) (2026-02-16)
+
+
+### Bug Fixes
+
+* **ci:** publish coverage to codecov ([f1bb407](https://github.com/Texarkanine/a16n-plugin-cursorrules/commit/f1bb407bc5d9d75e3f74f07f56537ac82d4df69d))
+
 ## [0.1.1](https://github.com/Texarkanine/a16n-plugin-cursorrules/compare/a16n-plugin-cursorrules-v0.1.0...a16n-plugin-cursorrules-v0.1.1) (2026-02-15)
 
 
