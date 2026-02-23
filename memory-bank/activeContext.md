@@ -1,17 +1,14 @@
-# Active Context: a16n-plugin-cursorrules
+# Active Context: GlobalPrompt Name — Complete Implementation
 
-## Current Focus
+## Current Task
+**Phase:** REFLECT - COMPLETE
 
-Implementation of Workspace support is complete. Plugin now conforms to the updated `A16nPlugin` interface from `@a16njs/models` v0.10.0.
+## What Was Done
 
-## Recent Decisions
+All 6 implementation phases complete. 849 tests pass. `GlobalPrompt.name` is now a required field backed by `inferGlobalPromptName(sourcePath)` in `@a16njs/models`. All discovery plugins set `name` at discovery time; all emission plugins consume `gp.name` directly. Zero `as any` casts.
 
-1. **Migration strategy:** Used `resolveRoot()` (not full Workspace abstraction) — matches the pattern used by built-in plugins (plugin-cursor, plugin-claude)
-2. **pathPatterns:** Left absent — the property is optional and doesn't fit well for root-level dotfiles with no directory prefix
-3. **@a16njs/models version:** Bumped from `^0.9.0` to `^0.10.0` — v0.10.0 is where `Workspace`, `resolveRoot`, `LocalWorkspace` were introduced
-4. **Test approach:** Used `LocalWorkspace` from `@a16njs/models` to test that `Workspace` instances are accepted
+Reflection document written: `memory-bank/reflection/reflection-naming-fix.md`
 
-## Immediate Next Steps
+## Next Step
 
-1. Run `/reflect` to review the implementation
-2. Commit and potentially create PR
+Run `/niko-archive` to archive this task and clean up the memory bank.

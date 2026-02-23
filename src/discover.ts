@@ -8,6 +8,7 @@ import {
   CURRENT_IR_VERSION,
   createId,
   resolveRoot,
+  inferGlobalPromptName,
 } from '@a16njs/models';
 
 /**
@@ -92,6 +93,7 @@ export async function discover(rootOrWorkspace: string | Workspace): Promise<Dis
         version: CURRENT_IR_VERSION,
         sourcePath: entryPath,
         relativeDir,
+        name: inferGlobalPromptName(entry.name),
         content,
         metadata: {},
       });

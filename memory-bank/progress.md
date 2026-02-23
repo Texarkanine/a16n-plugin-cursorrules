@@ -1,24 +1,72 @@
-# Progress: a16n-plugin-cursorrules
+# Progress: Issue #6 Implementation - COMPLETED
 
-## Current Task: Adapt to New Plugin Interface (Workspace Support)
+## Task: Fix .cursorrules filename in emission (GitHub Issue #6)
 
-### Status: Implementation Complete
+### Phase 1: Investigation ✅ COMPLETED
+- Analyzed problem: GlobalPrompt items were losing filename information during emission
+- Root cause: a16n framework's emit logic didn't support custom names for GlobalPrompt
+- Solution identified: Add optional `name` field to GlobalPrompt interface
 
-### Completed
-- [x] Analyzed new `A16nPlugin` interface from `@a16njs/models`
-- [x] Compared current plugin code against required interface
-- [x] Studied how built-in plugins (plugin-cursor, plugin-claude) handle the migration
-- [x] Decided on `resolveRoot()` approach (matches built-in plugin pattern)
-- [x] Bumped `@a16njs/models` from ^0.9.0 to ^0.10.0 (Workspace types are in v0.10.0)
-- [x] Created implementation plan with TDD phases
-- [x] Phase 1: Test modifications (TDD — wrote 3 new Workspace parameter tests, verified they fail)
-- [x] Phase 2: Code changes (updated `discover.ts` and `index.ts` signatures + `resolveRoot()`)
-- [x] Phase 3: Verification (build, typecheck, full test suite — 21/21 pass, 94.8% coverage)
-- [x] Phase 4: Memory bank updates
+### Phase 2: Framework Changes ✅ COMPLETED
 
-### Key Decisions During Implementation
-- **@a16njs/models version:** Plan said ^0.9.0 had Workspace types — it didn't. Bumped to ^0.10.0 which has them.
-- **pathPatterns:** Left absent (optional field). `.cursorrules` has no directory prefix and the primary file has no extension — `PluginPathPatterns` is not a natural fit.
+**a16n/packages/models/src/types.ts**
+- Added `name?: string` field to GlobalPrompt interface (optional, mirrors SimpleAgentSkill pattern)
+- Documentation explains purpose: "Name for emission (e.g., 'cursorrules' for .cursorrules files)"
 
-### Blockers
-None.
+**a16n/packages/plugin-a16n/src/emit.ts**
+- Imported `isGlobalPrompt` helper
+- Updated `emitStandardIR()` to check `isGlobalPrompt(item) && item.name` before falling back to ID parsing
+- Preserves backward compatibility for GlobalPrompts without explicit name
+
+**a16n/packages/plugin-cursor/src/emit.ts**
+- Updated GlobalPrompt emission to prefer `gp.name` over `gp.sourcePath || gp.id`
+- Uses existing `sanitizeFilename()` function for consistent naming across all types
+
+### Phase 3: Plugin Updates ✅ COMPLETED
+
+**a16n-plugin-cursorrules/src/discover.ts**
+- Set `name: 'cursorrules'` on all discovered GlobalPrompt items
+- Used `as any` cast (temporary until types propagate)
+
+**a16n-plugin-cursorrules/test/discover.test.ts**
+- Added 4 comprehensive tests:
+  - Root `.cursorrules` file has name field
+  - `.cursorrules.md` variant has name field
+  - `.cursorrules.txt` variant has name field
+  - All nested files have correct name field
+
+### Phase 4: Verification ✅ COMPLETED
+- All 25 cursorrules tests pass
+- All 97 plugin-a16n tests pass (existing tests still work)
+- All 123 plugin-cursor tests pass (existing tests still work)
+- No regressions introduced
+
+### Phase 5: Documentation ✅ COMPLETED
+- Created comprehensive investigation document
+- Active context updated with current state
+- Progress tracked for future reference
+
+## Final Deliverables
+✅ a16n framework changes ready for publication
+✅ cursorrules plugin changes ready for publication
+✅ All tests passing
+✅ Backward compatibility maintained
+✅ Architecture documented
+✅ Type-safe implementation (with temporary `as any` during transition)
+
+## Status: READY FOR PUBLICATION
+Awaiting a16n maintainer publication of:
+- @a16njs/models@0.10.2+
+- @a16njs/plugin-a16n@next
+- @a16njs/plugin-cursor@next
+
+## 2026-02-23 - REFLECT - COMPLETE
+
+* Work completed
+    - Reflection document written: `memory-bank/reflection/reflection-naming-fix.md`
+    - Active context updated to REFLECT - COMPLETE
+* Insights
+    - TypeScript union type discrimination doesn't narrow object literals pushed into typed arrays — requires `as ConcreteType` cast at push sites
+    - Leading-dot file naming in Node.js requires pre-processing before `extname`/`basename` — `inferGlobalPromptName` is the canonical fix
+    - Required fields are strictly better than optional fields when the invariant is "always present at all consuming sites"
+    - Explicit "Out of Scope" in the plan pays dividends during QA scope reassessment

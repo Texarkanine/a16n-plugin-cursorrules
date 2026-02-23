@@ -1,103 +1,107 @@
-# Tasks: a16n-plugin-cursorrules
+---
+# Tasks: GlobalPrompt Name Field — Complete Implementation
 
-## Current Task: Adapt to New Plugin Interface (Workspace Support)
+**Complexity:** Level 3
+**Status:** PLAN
 
-**Status:** Reflection Complete — Ready for Archive
-**Complexity:** Level 2 (Enhancement)
-**Branch:** TBD (suggest `feat/workspace-support`)
+## Problem Statement
 
-### Background
+Discovery plugins know what a GlobalPrompt is called (its source filename stem). Emission plugins currently re-derive this name from the source path at emission time — which is fragile, duplicated across every plugin, and broken for leading-dot filenames like `.cursorrules`.
 
-The `A16nPlugin` interface in `@a16njs/models` has changed. Both `discover()` and `emit()` now accept `string | Workspace` instead of plain `string`. A new optional `pathPatterns` property was also added. The plugin must be updated to conform to the new interface.
+The fix: a centralized `inferGlobalPromptName(sourcePath)` utility in `@a16njs/models`, combined with making `GlobalPrompt.name` a **required** field (not optional). Every discovery plugin sets `name` at discovery time. Every emission plugin reads `gp.name` directly — no fallback derivation needed, no `as any` casts.
 
-### Gap Analysis
+## Design
 
-| Aspect | Current | Required |
-|---|---|---|
-| `discover` param | `root: string` | `rootOrWorkspace: string \| Workspace` |
-| `emit` param | `_root: string` | `_rootOrWorkspace: string \| Workspace` |
-| `pathPatterns` | absent | optional `PluginPathPatterns` |
-| FS operations | direct `node:fs/promises` | `resolveRoot()` to extract string (matches plugin-cursor pattern) |
-| Workspace imports | none | `Workspace`, `resolveRoot` from `@a16njs/models` |
+### `inferGlobalPromptName(sourcePath: string): string`
 
-### Design Decision: `resolveRoot()` vs Full Workspace Abstraction
+Logic:
+1. Take `path.basename(sourcePath)`
+2. Strip leading dot if present: `.cursorrules` → `cursorrules`
+3. Strip last extension: `cursorrules.md` → `cursorrules`, `CLAUDE.md` → `CLAUDE`
 
-The built-in plugins (`plugin-cursor`, `plugin-claude`) use `resolveRoot()` — they accept `string | Workspace` but extract the root path string to continue using `node:fs/promises` directly. This is the pragmatic migration path:
+Test cases:
+- `.cursorrules` → `cursorrules`
+- `.cursorrules.md` → `cursorrules`
+- `.cursorrules.txt` → `cursorrules`
+- `CLAUDE.md` → `CLAUDE`
+- `AGENTS.md` → `AGENTS`
+- `my-rule.mdc` → `my-rule`
+- `foo.bar.mdc` → `foo.bar`
 
-- **Pro:** Minimal code change, proven pattern, no behavioral changes
-- **Pro:** Recursive directory traversal (which this plugin does) maps naturally to `node:fs` but would need manual reimplementation with `Workspace.readdir()` (single-level only)
-- **Con:** Doesn't leverage Workspace abstraction for testing (but `LocalWorkspace` just wraps `node:fs` anyway)
+### IR Format Unchanged
 
-**Decision:** Use `resolveRoot()`, matching the built-in plugin pattern.
+`GlobalPrompt.name` is NOT serialized to IR frontmatter. The IR filename IS the name (as it already is for all types). When plugin-a16n re-discovers a GlobalPrompt from `.a16n/global-prompt/cursorrules.md`, it sets `name: 'cursorrules'` from the filename. Roundtrip preserved.
 
-### Implementation Checklist
+### Discovery sets `name`, Emission uses `name`
 
-#### Phase 1: Test Modifications (TDD)
+No emission plugin needs to know how to derive a name — they all just use `gp.name`. If `name` is required, TypeScript enforces correctness at every construction site.
 
-##### 1.1 Update `test/discover.test.ts`
-- [x]Import `LocalWorkspace` from `@a16njs/models`
-- [x]Add test: "accepts a Workspace instance" — pass a `LocalWorkspace` wrapping an existing fixture dir, verify identical results to passing the string directly
-- [x]Add test: "works with Workspace for nested discovery" — pass `LocalWorkspace` wrapping `nested-cursorrules` fixture
+## Work Items
 
-##### 1.2 Update `test/index.test.ts`
-- [x]Import `LocalWorkspace` from `@a16njs/models`
-- [x]Add test: "discover accepts Workspace parameter" — call `plugin.discover(new LocalWorkspace(...))` with a fixture
-- [x]Add test: "emit accepts Workspace parameter" — call `plugin.emit(items, new LocalWorkspace(...))` and verify unsupported behavior
-- [x]Verify existing `string`-parameter tests still pass (backward compatibility)
+### Phase 1: @a16njs/models (a16n repo)
 
-##### 1.3 Run Tests — All New Tests Should FAIL
-- [x]`npm run test` — new workspace tests fail (signatures don't accept Workspace yet), existing tests pass
+- [ ] **STUB** `inferGlobalPromptName` in `packages/models/src/helpers.ts` (empty function, correct signature + JSDoc)
+- [ ] **STUB** tests for `inferGlobalPromptName` in `packages/models/test/helpers.test.ts` (empty `it()` blocks)
+- [ ] **IMPLEMENT** tests (all edge cases listed above)
+- [ ] **RUN** tests → expect failures
+- [ ] Change `name?: string` → `name: string` on `GlobalPrompt` in `packages/models/src/types.ts`
+- [ ] Update JSDoc: "Set at discovery time using `inferGlobalPromptName(sourcePath)`. Used by emission plugins for output filename."
+- [ ] Export `inferGlobalPromptName` from `packages/models/src/index.ts`
+- [ ] **IMPLEMENT** `inferGlobalPromptName`
+- [ ] Fix TypeScript errors in `packages/models/test/types.test.ts` (add `name` to any GlobalPrompt literals)
+- [ ] Run `pnpm test` in models — all pass
 
-#### Phase 2: Code Changes
+### Phase 2: plugin-a16n (a16n repo)
 
-##### 2.1 Update `src/discover.ts`
-- [x]Add `Workspace` type and `resolveRoot` to imports from `@a16njs/models`
-- [x]Change signature: `discover(root: string)` → `discover(rootOrWorkspace: string | Workspace)`
-- [x]Add `const root = resolveRoot(rootOrWorkspace);` as first line
-- [x]Remove the old `root` parameter usage (it becomes the extracted string)
-- [x]All `node:fs/promises` usage remains unchanged — `root` is still a string
+- [ ] **STUB** test in `packages/plugin-a16n/test/emit.test.ts`: GlobalPrompt with `name: 'cursorrules'` emits to `cursorrules.md`
+- [ ] **STUB** test in `packages/plugin-a16n/test/parse.test.ts` (or discover.test.ts): IR file `cursorrules.md` → parsed GlobalPrompt has `name: 'cursorrules'`
+- [ ] **IMPLEMENT** tests → run → expect failures
+- [ ] `packages/plugin-a16n/src/parse.ts` — GlobalPrompt case: add `name: nameWithoutExt` (already computed in scope)
+- [ ] `packages/plugin-a16n/src/emit.ts` — simplify: `isGlobalPrompt(item)` branch (no `&& item.name` guard needed)
+- [ ] Fix any TypeScript errors from required `name` field (test fixtures, etc.)
+- [ ] Run `pnpm test` in plugin-a16n — all pass
 
-##### 2.2 Update `src/index.ts`
-- [x]Add `Workspace` type import from `@a16njs/models`
-- [x]Change `discover(root: string)` → `discover(rootOrWorkspace: string | Workspace)`
-- [x]Change `emit(models, _root: string, ...)` → `emit(models, _rootOrWorkspace: string | Workspace, ...)`
-- [x]Add `pathPatterns` property (optional but recommended for consistency):
-  ```typescript
-  pathPatterns: {
-    prefixes: [],         // .cursorrules lives at project root, no directory prefix
-    extensions: [''],     // no extension (bare .cursorrules), plus .md, .txt tryhard variants
-  }
-  ```
-  **Note:** pathPatterns may not be a great fit for cursorrules since files are at root level with no directory prefix and the primary file has no extension. Evaluate whether to include it or leave it absent. The field is optional.
+### Phase 3: plugin-cursor (a16n repo)
 
-##### 2.3 Run Tests — All Should PASS
-- [x]`npm run test` — all tests pass including new workspace tests
+- [ ] **STUB** test in `packages/plugin-cursor/test/discover.test.ts`: `alwaysApply: true` rule named `foo.mdc` → GlobalPrompt has `name: 'foo'`
+- [ ] **STUB** test in `packages/plugin-cursor/test/emit.test.ts`: GlobalPrompt with `name: 'cursorrules'` → emits to `.cursor/rules/cursorrules.mdc`
+- [ ] **IMPLEMENT** tests → run → expect failures
+- [ ] `packages/plugin-cursor/src/discover.ts` — `classifyRule()`: add `name: inferGlobalPromptName(sourcePath)` to GlobalPrompt branch; import `inferGlobalPromptName`
+- [ ] `packages/plugin-cursor/src/emit.ts` — GlobalPrompt loop: `sanitizeFilename(gp.name)` (remove conditional fallback)
+- [ ] Fix TypeScript errors (test fixtures, etc.)
+- [ ] Run `pnpm test` in plugin-cursor — all pass
 
-#### Phase 3: Verification
-- [x]`npm run build` passes
-- [x]`npm run typecheck` passes
-- [x]`npm run test` passes (full suite)
-- [x]All test cases green
-- [x]Coverage acceptable
+### Phase 4: plugin-claude (a16n repo)
 
-#### Phase 4: Memory Bank Updates
-- [x]Update `systemPatterns.md` with new interface
-- [x]Update `techContext.md` if needed
-- [x]Update `activeContext.md`
-- [x]Update `progress.md`
+- [ ] **STUB** test in `packages/plugin-claude/test/discover.test.ts`: `CLAUDE.md` → GlobalPrompt has `name: 'CLAUDE'`; `.claude/rules/foo.md` → GlobalPrompt has `name: 'foo'`
+- [ ] **STUB** test in `packages/plugin-claude/test/emit.test.ts`: GlobalPrompt with `name: 'cursorrules'` → emits to `.claude/rules/cursorrules.md`
+- [ ] **IMPLEMENT** tests → run → expect failures
+- [ ] `packages/plugin-claude/src/discover.ts` — CLAUDE.md discovery: add `name: inferGlobalPromptName(normalizedPath)`; .claude/rules/ discovery: same; import `inferGlobalPromptName`
+- [ ] `packages/plugin-claude/src/emit.ts` — GlobalPrompt loop: `sanitizeFilename(gp.name)` (currently uses sourcePath, missing the name check entirely)
+- [ ] Fix TypeScript errors (test fixtures, etc.)
+- [ ] Run `pnpm test` in plugin-claude — all pass
 
-### Components
+### Phase 5: Full a16n suite
 
-| Component | File | Change Type |
-|-----------|------|-------------|
-| Discovery | `src/discover.ts` | Signature change + `resolveRoot()` |
-| Plugin entry | `src/index.ts` | Signature change + optional `pathPatterns` |
-| Discovery tests | `test/discover.test.ts` | Add Workspace parameter tests |
-| Plugin tests | `test/index.test.ts` | Add Workspace parameter tests |
+- [ ] Run `pnpm test` from a16n root — all packages pass
+- [ ] Confirm no `as any` needed in any a16n plugin
 
-### Risk Assessment
+### Phase 6: a16n-plugin-cursorrules (after a16n published)
 
-- **Low risk:** This is a signature-compatible change. Passing `string` still works because `string | Workspace` is a widening of the parameter type.
-- **No behavioral change:** `resolveRoot()` extracts the same string that was previously passed directly.
-- **Backward compatible:** Existing callers passing strings are unaffected.
-- **@a16njs/models version:** Bumped to `^0.10.0` which includes `Workspace`, `resolveRoot`, `toWorkspace`, `LocalWorkspace`.
+- [ ] Update `package.json` devDep `@a16njs/models` to the new published version
+- [ ] `src/discover.ts` — replace `name: 'cursorrules', } as any` with `name: inferGlobalPromptName(entry.name),`; import `inferGlobalPromptName`
+- [ ] Run `pnpm test` — all 25 tests pass (existing name tests now type-safe)
+
+## Invariants
+
+- `GlobalPrompt.name` is always a non-empty string (enforced by TypeScript)
+- `name` = sanitized stem of the source filename (enforced by the shared utility)
+- IR roundtrip: `name` → IR filename → re-read `name` is lossless
+- No emission plugin re-derives names from source paths for GlobalPrompts
+- `formatIRFile` does NOT need to change (name stays as filename, not in frontmatter)
+- `extractNameFromId` fallback in plugin-a16n's `emitStandardIR` is preserved for non-GlobalPrompt types
+
+## Out of Scope (Future Work)
+
+- plugin-claude "smart subdir" behavior (single GlobalPrompt in subdir → local CLAUDE.md vs hoist with `paths:`). This is orthogonal to `name` — depends on `relativeDir` + count, not name. The `name` field will be available for disambiguation when that work happens.
+- plugin-a16n serializing `name` into IR frontmatter (not needed; filename IS the name)
