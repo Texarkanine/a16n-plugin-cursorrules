@@ -194,4 +194,40 @@ describe('discover', () => {
     expect(result.items).toHaveLength(2);
     expect(result.items.every((i) => i.type === CustomizationType.GlobalPrompt)).toBe(true);
   });
+
+  // --- Name field for emission ---
+  // The name field (at top level) is used during emission (e.g., to @a16njs/plugin-cursor)
+  // to determine the output filename. For .cursorrules files, this should be
+  // "cursorrules" so that the emitted file is "cursorrules.mdc" not "rule.mdc".
+  // Combined with relativeDir, a nested .cursorrules at foo/bar/.cursorrules
+  // should emit to foo/bar/.cursor/rules/cursorrules.mdc
+
+  it('sets name field to "cursorrules" for .cursorrules file', async () => {
+    const root = resolve(fixturesDir, 'with-cursorrules');
+    const result = await discover(root);
+
+    expect(result.items[0].name).toBe('cursorrules');
+  });
+
+  it('sets name field to "cursorrules" for .cursorrules.md variant', async () => {
+    const root = resolve(fixturesDir, 'with-cursorrules-md');
+    const result = await discover(root);
+
+    expect(result.items[0].name).toBe('cursorrules');
+  });
+
+  it('sets name field to "cursorrules" for .cursorrules.txt variant', async () => {
+    const root = resolve(fixturesDir, 'with-cursorrules-txt');
+    const result = await discover(root);
+
+    expect(result.items[0].name).toBe('cursorrules');
+  });
+
+  it('sets name field for nested .cursorrules files', async () => {
+    const root = resolve(fixturesDir, 'nested-cursorrules');
+    const result = await discover(root);
+
+    expect(result.items).toHaveLength(2);
+    expect(result.items.every((i) => i.name === 'cursorrules')).toBe(true);
+  });
 });
