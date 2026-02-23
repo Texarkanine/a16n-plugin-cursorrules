@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/Texarkanine/a16n-plugin-cursorrules/compare/a16n-plugin-cursorrules-v0.1.2...a16n-plugin-cursorrules-v0.1.3) (2026-02-23)
+
+
+### Features
+
+* require GlobalPrompt.name using inferGlobalPromptName ([#7](https://github.com/Texarkanine/a16n-plugin-cursorrules/issues/7)) ([dce1c61](https://github.com/Texarkanine/a16n-plugin-cursorrules/commit/dce1c619db4b5107fc1a557b128177f0e05a2aae))
+
 ## [0.1.2](https://github.com/Texarkanine/a16n-plugin-cursorrules/compare/a16n-plugin-cursorrules-v0.1.1...a16n-plugin-cursorrules-v0.1.2) (2026-02-16)
 
 
