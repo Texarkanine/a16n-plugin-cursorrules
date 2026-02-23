@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@a16njs/models':
-        specifier: file:../a16n/packages/models
-        version: file:../a16n/packages/models
+        specifier: ^0.11.0
+        version: 0.11.0
       '@types/node':
         specifier: ^20.0.0
         version: 20.19.33
@@ -29,8 +29,8 @@ importers:
 
 packages:
 
-  '@a16njs/models@file:../a16n/packages/models':
-    resolution: {directory: ../a16n/packages/models, type: directory}
+  '@a16njs/models@0.11.0':
+    resolution: {integrity: sha512-EBK2qDRUou0KOfovDknJMhzkJq6hR/xq2xnYQfs/CszqsDE0XD79a5QICHUP+R5LuMWd81bjQ7L8Cf5EkDlPXw==}
 
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
@@ -820,7 +820,7 @@ packages:
 
 snapshots:
 
-  '@a16njs/models@file:../a16n/packages/models':
+  '@a16njs/models@0.11.0':
     dependencies:
       gray-matter: 4.0.3
 
